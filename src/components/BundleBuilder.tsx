@@ -8,6 +8,7 @@ interface BundleBuilderProps {
   countdown: { hours: string; mins: string; secs: string };
   currency: CurrencyCode;
   language: LanguageCode;
+  editions: Edition[];
   selectedBundle: BundleTier;
   onSelectBundle: (bundle: BundleTier) => void;
   selectedEditions: Edition[];
@@ -21,6 +22,7 @@ export function BundleBuilder({
   countdown,
   currency,
   language,
+  editions,
   selectedBundle,
   onSelectBundle,
   selectedEditions,
@@ -179,24 +181,28 @@ export function BundleBuilder({
 
         {/* 10 Edition Cards Grid */}
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-          {EDITIONS.map((edition) => {
+          {(editions.length > 0 ? editions : EDITIONS).map((edition) => {
             const currentSlotEdition = selectedEditions[safeSlotTab] ?? EDITIONS[0];
             const isChosen = currentSlotEdition.id === edition.id;
+            const isSoldOut = edition.is_active === false || edition.stock_quantity === 0;
             return (
               <button
                 key={edition.id}
                 type="button"
+                disabled={isSoldOut}
                 onClick={() => onChangeEditionAtSlot(safeSlotTab, edition)}
                 aria-pressed={isChosen}
                 className={`group flex flex-col rounded-xl border p-2 text-left transition-all focus-visible:outline-2 focus-visible:outline-[#1D4ED8] ${
-                  isChosen
-                    ? 'border-[#1D4ED8] bg-white ring-2 ring-[#1D4ED8]/20'
-                    : 'border-[#E5E7EB] bg-white hover:border-slate-300'
+                  isSoldOut
+                    ? 'border-[#E5E7EB] bg-slate-50 opacity-60 cursor-not-allowed'
+                    : isChosen
+                    ? 'border-[#1D4ED8] bg-white ring-2 ring-[#1D4ED8]/20 cursor-pointer'
+                    : 'border-[#E5E7EB] bg-white hover:border-slate-300 cursor-pointer'
                 }`}
               >
                 <MediaPlaceholder
                   aspectClass="aspect-square w-full"
-                  label="Uploading Soon"
+                  label={isSoldOut ? 'Sold Out' : 'Uploading Soon'}
                   compact
                 />
                 <div className="mt-2 flex items-start justify-between gap-1">

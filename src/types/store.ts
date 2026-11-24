@@ -7,6 +7,11 @@ export interface Edition {
   number: number;
   name: string;
   subtitle: string;
+  sku?: string;
+  stock_quantity?: number;
+  units_sold?: number;
+  revenue_usd?: number;
+  is_active?: boolean;
 }
 
 export interface BundleTier {
@@ -68,7 +73,18 @@ export type OrderStatus =
   | 'In Transit'
   | 'Delivered';
 
+export interface TrafficAttribution {
+  source: string;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  ttclid: string | null;
+  referrer: string | null;
+  landing_path: string;
+}
+
 export interface OrderRecord {
+  id?: string;
   tracking_number: string;
   status: OrderStatus;
   bundle_title: string;
@@ -80,10 +96,21 @@ export interface OrderRecord {
   currency: CurrencyCode;
   total_amount: number;
   created_at: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  shipping_address?: ShippingAddress;
+  promo_code?: string | null;
+  payment_method?: string;
+  payment_status?: string;
+  traffic_source?: string;
+  utm_campaign?: string | null;
+  ttclid?: string | null;
 }
 
 export interface NewOrderPayload {
   tracking_number: string;
+  user_id?: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -100,14 +127,54 @@ export interface NewOrderPayload {
   shipping_cost: number;
   total_amount: number;
   payment_method: string;
+  payment_status?: string;
   status: OrderStatus;
+  traffic_source?: string;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  ttclid?: string | null;
+  referrer?: string | null;
 }
 
 export interface ContactMessagePayload {
+  id?: string;
   name: string;
   email: string;
-  order_number?: string;
+  order_number?: string | null;
   message: string;
+  created_at?: string;
+}
+
+export interface SubscriberRecord {
+  id?: string;
+  email: string;
+  promo_code: string;
+  traffic_source: string;
+  utm_campaign?: string | null;
+  created_at: string;
+}
+
+export interface TrafficEventRecord {
+  id?: string;
+  session_id: string;
+  source: string;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  ttclid: string | null;
+  referrer: string | null;
+  landing_path: string;
+  event_type: 'page_view' | 'add_to_cart' | 'checkout_start' | 'purchase';
+  edition_id?: string | null;
+  created_at: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: 'customer' | 'admin';
 }
 
 export interface CountryConfig {

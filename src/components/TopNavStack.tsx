@@ -1,12 +1,15 @@
-import { Menu, ShoppingBag, X } from 'lucide-react';
+import { Menu, ShieldCheck, ShoppingBag, User as UserIcon, X } from 'lucide-react';
 import { useState } from 'react';
 import { TRANSLATIONS } from '../data/catalog';
-import type { LanguageCode } from '../types/store';
+import type { LanguageCode, UserProfile } from '../types/store';
 
 interface TopNavStackProps {
   countdown: { hours: string; mins: string; secs: string };
   cartCount: number;
   onOpenCart: () => void;
+  onOpenAuth: () => void;
+  onOpenAdmin: () => void;
+  profile: UserProfile | null;
   language: LanguageCode;
 }
 
@@ -23,6 +26,9 @@ export function TopNavStack({
   countdown,
   cartCount,
   onOpenCart,
+  onOpenAuth,
+  onOpenAdmin,
+  profile,
   language,
 }: TopNavStackProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -109,19 +115,33 @@ export function TopNavStack({
             MIST &amp; TURF
           </a>
 
-          <button
-            type="button"
-            onClick={onOpenCart}
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#111111] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-[#1D4ED8]"
-            aria-label={`Open shopping bag (${cartCount} items)`}
-          >
-            <ShoppingBag className="h-5 w-5" />
-            {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1D4ED8] px-1 text-[11px] font-bold text-white tabular-nums">
-                {cartCount}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-bold text-[#111111] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-[#1D4ED8] cursor-pointer"
+              aria-label={profile ? `Account (${profile.email})` : 'Sign in or Sign up'}
+            >
+              <UserIcon className="h-5 w-5" />
+              <span className="hidden sm:inline whitespace-nowrap">
+                {profile ? 'Account' : 'Sign In'}
               </span>
-            )}
-          </button>
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenCart}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#111111] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-[#1D4ED8] cursor-pointer"
+              aria-label={`Open shopping bag (${cartCount} items)`}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1D4ED8] px-1 text-[11px] font-bold text-white tabular-nums">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -166,6 +186,37 @@ export function TopNavStack({
                   </li>
                 ))}
               </ul>
+              <div className="mt-5 border-t border-[#E5E7EB] pt-4 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    onOpenAuth();
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F8FAFC] px-3 py-2.5 text-left text-xs font-bold text-[#111111] hover:border-[#1D4ED8] cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <UserIcon className="h-4 w-4 text-[#1D4ED8]" />
+                    <span>{profile ? `Account (${profile.email})` : 'Sign In / Sign Up'}</span>
+                  </span>
+                  <span>→</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    onOpenAdmin();
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg bg-[#111111] px-3 py-2.5 text-left text-xs font-bold text-white hover:bg-slate-800 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#F59E0B]" />
+                    <span>Admin Console</span>
+                  </span>
+                  <span>→</span>
+                </button>
+              </div>
             </div>
 
             <div className="border-t border-[#E5E7EB] p-4 bg-[#F8FAFC]">

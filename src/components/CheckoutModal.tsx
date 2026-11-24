@@ -1,14 +1,23 @@
 import { Check, CheckCircle2, CreditCard, Lock, Smartphone, Tag, Truck, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { COUNTRIES, EXPRESS_SHIPPING_USD, formatCurrency } from '../data/catalog';
 import { createOrder, generateTrackingNumber } from '../lib/supabase';
-import type { CartItem, CurrencyCode, OrderRecord } from '../types/store';
+import type {
+  CartItem,
+  CurrencyCode,
+  OrderRecord,
+  TrafficAttribution,
+  UserProfile,
+} from '../types/store';
 
 interface CheckoutModalProps {
   open: boolean;
   onClose: () => void;
   items: CartItem[];
   currency: CurrencyCode;
+  attribution: TrafficAttribution;
+  profile: UserProfile | null;
+  initialPromoCode?: string | null;
   onOrderCompleted: (order: OrderRecord) => void;
   onJumpToTrack: (trackingNumber: string) => void;
 }
@@ -20,6 +29,9 @@ export function CheckoutModal({
   onClose,
   items,
   currency,
+  attribution,
+  profile,
+  initialPromoCode,
   onOrderCompleted,
   onJumpToTrack,
 }: CheckoutModalProps) {
@@ -59,10 +71,35 @@ export function CheckoutModal({
     [countryCode]
   );
 
+  useEffect(() => {
+    if (profile?.email && !email) setEmail(profile.email);
+    if (profile?.full_name && !fullName) setFullName(profile.full_name);
+  }, [profile, email, fullName]);
+
+  useEffect(() => {
+    if (initialPromoCode && !appliedPromo) {
+      const code = initialPromoCode.trim().toUpperCase();
+      if (code === 'MIST5' || code === 'TURF10') {
+        setPromoInput(code);
+        setAppliedPromo(code);
+        setPromoFeedback(
+          code === 'MIST5'
+            ? 'MIST5 applied — 5% off your first order!'
+            : 'TURF10 applied — 10% off your order!'
+        );
+      }
+    }
+  }, [initialPromoCode, appliedPromo]);
+
   if (!open) return null;
 
   const subtotalUsd = items.reduce((sum, item) => sum + item.unitPriceUsd * item.quantity, 0);
-  const promoDiscountUsd = appliedPromo === 'TURF10' ? subtotalUsd * 0.1 : 0;
+  const promoDiscountUsd =
+    appliedPromo === 'TURF10'
+      ? subtotalUsd * 0.1
+      : appliedPromo === 'MIST5'
+      ? subtotalUsd * 0.05
+      : 0;
   const shippingUsd = shippingMethod === 'express' ? EXPRESS_SHIPPING_USD : 0;
   const totalUsd = Math.max(0, subtotalUsd - promoDiscountUsd + shippingUsd);
 
@@ -98,9 +135,12 @@ export function CheckoutModal({
     if (code === 'TURF10') {
       setAppliedPromo('TURF10');
       setPromoFeedback('TURF10 applied — 10% off your order!');
+    } else if (code === 'MIST5') {
+      setAppliedPromo('MIST5');
+      setPromoFeedback('MIST5 applied — 5% off your first order!');
     } else {
       setAppliedPromo(null);
-      setPromoFeedback('Invalid code. Try TURF10 for 10% off.');
+      setPromoFeedback('Invalid code. Try MIST5 (5% off) or TURF10 (10% off).');
     }
   };
 
@@ -141,6 +181,7 @@ export function CheckoutModal({
 
     const result = await createOrder({
       tracking_number: trackingNumber,
+      user_id: profile?.id && !profile.id.startsWith('preview-') ? profile.id : null,
       customer_name: fullName.trim(),
       customer_email: email.trim(),
       customer_phone: `${dialCode} ${phone.trim()}`,
@@ -170,7 +211,14 @@ export function CheckoutModal({
           : paymentMethod === 'apple-pay'
           ? 'Apple Pay'
           : 'Google Pay',
+      payment_status: 'pending_gateway',
       status: 'Order Confirmed',
+      traffic_source: attribution.source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      ttclid: attribution.ttclid,
+      referrer: attribution.referrer,
     });
 
     setSubmitting(false);
@@ -450,14 +498,14 @@ export function CheckoutModal({
               <div className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] p-4">
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#111111]">
                   <Tag className="h-3.5 w-3.5 text-[#1D4ED8]" />
-                  <span>Promo Code (Try TURF10)</span>
+                  <span>Promo Code (Try MIST5 or TURF10)</span>
                 </label>
                 <div className="mt-2 flex gap-2">
                   <input
                     type="text"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
-                    placeholder="TURF10"
+                    placeholder="MIST5 or TURF10"
                     className="flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm uppercase focus:border-[#1D4ED8] focus:outline-none"
                   />
                   <button
